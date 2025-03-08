@@ -1,0 +1,41 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+# Virtual environment
+venv/
+env/
+*.venv
+Pipfile
+Pipfile.lock
+
+# Secret and configuration files
+.env
+client_secret.json 
+
+# Django-specific files
+db.sqlite3  # If using SQLite locally
+*.log
+*.pot
+*.pyc
+local_settings.py  # If you have any local settings file
+
+# Static & Media files (optional, if collected)
+staticfiles/
+media/
+
+# VS Code & IDE files
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# MacOS & Linux system files
+.DS_Store
+*.swp
+*.swo
+
+# Render / Heroku deployment files (optional)
+*.bak
+__pypackages__/
