@@ -128,7 +128,8 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
+# Set STATIC_ROOT (important for collectstatic in production)
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles") 
 
 ASGI_APPLICATION = "DjangoAuth.asgi.application"
 CHANNEL_LAYERS = {
