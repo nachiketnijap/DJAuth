@@ -158,7 +158,7 @@
         } else if (action === "download") {
           // Create a hidden <a> element to trigger the download
           const downloadLink = document.createElement("a");
-          downloadLink.href = `/download/?file_id=${selectedFileId}&access_token=${accessToken}`;
+          downloadLink.href = `download/?file_id=${selectedFileId}&access_token=${accessToken}`;
           downloadLink.download = "file"; // Default filename (can be overridden by backend)
           document.body.appendChild(downloadLink);
           downloadLink.click();
