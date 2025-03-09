@@ -64,21 +64,28 @@ def download_file(request):
         credentials = Credentials(token=access_token)
         service = build("drive", "v3", credentials=credentials)
 
+        # Get file metadata to retrieve the original file name
         file_metadata = service.files().get(fileId=file_id, fields="name").execute()
         original_file_name = file_metadata.get("name", f"downloaded_{file_id}")
 
+        # Prepare the file for download
         request = service.files().get_media(fileId=file_id)
         file_stream = io.BytesIO()
         downloader = MediaIoBaseDownload(file_stream, request)
 
+        # Download the file in chunks
         done = False
         while not done:
             status, done = downloader.next_chunk()
 
-        # Rewind the file stream
+        # Rewind the file stream to the beginning
         file_stream.seek(0)
 
+        # Create the response with the file content
         response = FileResponse(file_stream, as_attachment=True, filename=original_file_name)
+        response['Content-Disposition'] = f'attachment; filename="{original_file_name}"'
+        response['Content-Type'] = 'application/octet-stream'
+
         return response
 
     except Exception as e:
