@@ -11,6 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from googleapiclient.http import MediaIoBaseDownload
 from django.shortcuts import render
 from rest_framework.decorators import api_view
+from django.http import FileResponse
 @csrf_exempt
 def upload_file(request):
     if request.method == "POST":
@@ -48,10 +49,11 @@ def upload_file(request):
 
     return JsonResponse({"error": "Only POST requests are allowed"}, status=405)
 
+
+
 @csrf_exempt
 def download_file(request):
     try:
-        # Parse JSON data from request
         data = json.loads(request.body)
         access_token = data.get("access_token")
         file_id = data.get("file_id")
@@ -59,29 +61,12 @@ def download_file(request):
         if not access_token or not file_id:
             return JsonResponse({"error": "Missing access_token or file_id"}, status=400)
 
-        # Authenticate using access token
         credentials = Credentials(token=access_token)
         service = build("drive", "v3", credentials=credentials)
 
-        # Get file metadata (to get the original name)
         file_metadata = service.files().get(fileId=file_id, fields="name").execute()
-        original_file_name = file_metadata.get("name", f"downloaded_{file_id}")  # Fallback name
+        original_file_name = file_metadata.get("name", f"downloaded_{file_id}")
 
-        #  Detect User's OS and Set Downloads Folder Path
-        user_home = os.path.expanduser("~")  # Get user's home directory
-
-        if os.name == "posix":  # Linux/macOS
-            downloads_dir = os.path.join(user_home, "Downloads")
-        elif os.name == "nt":  # Windows
-            downloads_dir = os.path.join(user_home, "Downloads")
-        else:
-            downloads_dir = user_home  # Fallback: Save to Home if Downloads folder is missing
-
-        # Create Downloads directory if it doesn't exist
-        if not os.path.exists(downloads_dir):
-            os.makedirs(downloads_dir)
-
-        #Request to download the file from Google Drive
         request = service.files().get_media(fileId=file_id)
         file_stream = io.BytesIO()
         downloader = MediaIoBaseDownload(file_stream, request)
@@ -90,15 +75,15 @@ def download_file(request):
         while not done:
             status, done = downloader.next_chunk()
 
-        # Save the file in the system's Downloads folder
-        save_path = os.path.join(downloads_dir, original_file_name)
-        with open(save_path, "wb") as f:
-            f.write(file_stream.getvalue())
+        # Rewind the file stream
+        file_stream.seek(0)
 
-        return JsonResponse({"message": "File downloaded successfully", "file_path": save_path})
+        response = FileResponse(file_stream, as_attachment=True, filename=original_file_name)
+        return response
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
 
 @csrf_exempt
 def read_file(request):
