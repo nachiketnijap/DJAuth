@@ -54,9 +54,8 @@ def upload_file(request):
 @csrf_exempt
 def download_file(request):
     try:
-        data = json.loads(request.body)
-        access_token = data.get("access_token")
-        file_id = data.get("file_id")
+        file_id = request.GET.get("file_id")
+        access_token = request.GET.get("access_token")
 
         if not access_token or not file_id:
             return JsonResponse({"error": "Missing access_token or file_id"}, status=400)

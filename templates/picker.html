@@ -1,160 +1,185 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Google Picker</title>
     <script src="https://apis.google.com/js/api.js"></script>
     <style>
-        /* Modal Styling */
-        #fileActionModal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            text-align: center;
-        }
+      /* Modal Styling */
+      #fileActionModal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 20px;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        text-align: center;
+      }
 
-        #modalOverlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-        }
+      #modalOverlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+      }
 
-        button {
-            margin: 10px;
-            padding: 8px 16px;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-        }
+      button {
+        margin: 10px;
+        padding: 8px 16px;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+      }
 
-        .btn-read { background: #4CAF50; color: white; }
-        .btn-download { background: #008CBA; color: white; }
-        .btn-close { background: #f44336; color: white; }
+      .btn-read {
+        background: #4caf50;
+        color: white;
+      }
+      .btn-download {
+        background: #008cba;
+        color: white;
+      }
+      .btn-close {
+        background: #f44336;
+        color: white;
+      }
     </style>
-</head>
-<body>
-
+  </head>
+  <body>
     <button onclick="loadPicker()">Open Google Picker</button>
 
     <!-- File Action Modal -->
     <div id="modalOverlay"></div>
     <div id="fileActionModal">
-        <h3>Choose an action:</h3>
-        <p id="selectedFileText"></p>
-        <button class="btn-read" onclick="handleFileAction('read')">Read File</button>
-        <button class="btn-download" onclick="handleFileAction('download')">Download File</button>
-        <button class="btn-close" onclick="closeModal()">Cancel</button>
+      <h3>Choose an action:</h3>
+      <p id="selectedFileText"></p>
+      <button class="btn-read" onclick="handleFileAction('read')">
+        Read File
+      </button>
+      <button class="btn-download" onclick="handleFileAction('download')">
+        Download File
+      </button>
+      <button class="btn-close" onclick="closeModal()">Cancel</button>
     </div>
 
     <!-- File Content Display Area -->
-    <div id="fileContentContainer" style="margin-top: 20px; padding: 10px; border: 1px solid #ddd; display: none;">
-        <h3>File Content:</h3>
-        <pre id="fileContent" style="white-space: pre-wrap; word-wrap: break-word;"></pre>
+    <div
+      id="fileContentContainer"
+      style="
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        display: none;
+      "
+    >
+      <h3>File Content:</h3>
+      <pre
+        id="fileContent"
+        style="white-space: pre-wrap; word-wrap: break-word"
+      ></pre>
     </div>
 
     <script>
-        let accessToken = null; // Store token globally
-        let selectedFileId = null; // Store selected file ID
+      let accessToken = null; // Store token globally
+      let selectedFileId = null; // Store selected file ID
 
-        async function fetchAccessToken() {
-            try {
-                const response = await fetch("get-access-token/");
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.error || "Failed to fetch access token");
-                accessToken = data.access_token;
-                console.log("Access Token Fetched:", accessToken);
-            } catch (error) {
-                console.error("Error fetching access token:", error);
-            }
+      async function fetchAccessToken() {
+        try {
+          const response = await fetch("get-access-token/");
+          const data = await response.json();
+          if (!response.ok)
+            throw new Error(data.error || "Failed to fetch access token");
+          accessToken = data.access_token;
+          console.log("Access Token Fetched:", accessToken);
+        } catch (error) {
+          console.error("Error fetching access token:", error);
+        }
+      }
+
+      window.onload = fetchAccessToken; // Fetch token on page load
+
+      function loadPicker() {
+        gapi.load("picker", () => {
+          const picker = new google.picker.PickerBuilder()
+            .addView(google.picker.ViewId.DOCS)
+            .setOAuthToken(accessToken)
+            .setCallback(pickerCallback)
+            .build();
+          picker.setVisible(true);
+        });
+      }
+
+      function pickerCallback(data) {
+        if (data.action === google.picker.Action.PICKED) {
+          selectedFileId = data.docs[0].id;
+          console.log("Selected File ID:", selectedFileId);
+          showModal();
+        }
+      }
+
+      function showModal() {
+        document.getElementById(
+          "selectedFileText"
+        ).textContent = `File ID: ${selectedFileId}`;
+        document.getElementById("modalOverlay").style.display = "block";
+        document.getElementById("fileActionModal").style.display = "block";
+      }
+
+      function closeModal() {
+        document.getElementById("modalOverlay").style.display = "none";
+        document.getElementById("fileActionModal").style.display = "none";
+      }
+
+      function handleFileAction(action) {
+        closeModal(); // Close modal before proceeding
+
+        if (action === "read") {
+          fetch("read-file/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              file_id: selectedFileId,
+              access_token: accessToken,
+            }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              console.log("File Content:", data);
+              displayFileContent(data.content);
+            })
+            .catch((error) => console.error("Error:", error));
+        } else if (action === "download") {
+          // Create a hidden <a> element to trigger the download
+          const downloadLink = document.createElement("a");
+          downloadLink.href = `/download/?file_id=${selectedFileId}&access_token=${accessToken}`;
+          downloadLink.download = "file"; // Default filename (can be overridden by backend)
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          document.body.removeChild(downloadLink);
+        }
+      }
+
+      function displayFileContent(content) {
+        const contentContainer = document.getElementById(
+          "fileContentContainer"
+        );
+        const contentArea = document.getElementById("fileContent");
+
+        if (typeof content === "object") {
+          contentArea.textContent = JSON.stringify(content, null, 2); // Pretty print JSON
+        } else {
+          contentArea.textContent = content; // Show text content
         }
 
-        window.onload = fetchAccessToken;  // Fetch token on page load
-
-        function loadPicker() {
-            gapi.load("picker", () => {
-                const picker = new google.picker.PickerBuilder()
-                    .addView(google.picker.ViewId.DOCS)
-                    .setOAuthToken(accessToken)
-                    .setCallback(pickerCallback)
-                    .build();
-                picker.setVisible(true);
-            });
-        }
-
-        function pickerCallback(data) {
-            if (data.action === google.picker.Action.PICKED) {
-                selectedFileId = data.docs[0].id;
-                console.log("Selected File ID:", selectedFileId);
-                showModal();
-            }
-        }
-
-        function showModal() {
-            document.getElementById("selectedFileText").textContent = `File ID: ${selectedFileId}`;
-            document.getElementById("modalOverlay").style.display = "block";
-            document.getElementById("fileActionModal").style.display = "block";
-        }
-
-        function closeModal() {
-            document.getElementById("modalOverlay").style.display = "none";
-            document.getElementById("fileActionModal").style.display = "none";
-        }
-
-        function handleFileAction(action) {
-            closeModal(); // Close modal before proceeding
-
-            if (action === "read") {
-                fetch("read-file/", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ file_id: selectedFileId, access_token: accessToken }),
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log("File Content:", data);
-                    displayFileContent(data.content);
-                })
-                .catch(error => console.error("Error:", error));
-            } 
-            
-            else if (action === "download") {
-                fetch("download/", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ file_id: selectedFileId, access_token: accessToken }),
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log("Download Response:", data);
-                    alert(`File downloaded to: ${data.file_path}`);
-                })
-                .catch(error => console.error("Error:", error));
-            }
-        }
-
-        function displayFileContent(content) {
-            const contentContainer = document.getElementById("fileContentContainer");
-            const contentArea = document.getElementById("fileContent");
-
-            if (typeof content === "object") {
-                contentArea.textContent = JSON.stringify(content, null, 2);  // Pretty print JSON
-            } else {
-                contentArea.textContent = content;  // Show text content
-            }
-
-            contentContainer.style.display = "block";  // Show div
-        }
+        contentContainer.style.display = "block"; // Show div
+      }
     </script>
-</body>
+  </body>
 </html>
