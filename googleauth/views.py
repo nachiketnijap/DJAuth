@@ -3,7 +3,7 @@ import json
 from django.shortcuts import redirect
 from django.http import JsonResponse
 from google_auth_oauthlib.flow import Flow
-
+from django.shortcuts import render
 # Allow HTTP during local development
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
@@ -48,3 +48,9 @@ def google_callback(request):
     request.session['google_refresh_token'] = credentials.refresh_token
 
     return JsonResponse({"access_token": credentials.token})
+
+def display_home_page(request):
+    return render(request, 'home.html')
+
+def display_privacy_policy(request):
+    return render(request,"privacy.html")

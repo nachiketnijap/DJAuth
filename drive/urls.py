@@ -7,4 +7,5 @@ urlpatterns = [
     path("picker/read-file/",read_file, name="read-file"),
     path("picker/", google_picker, name="google_picker"),
     path('picker/get-access-token/', get_access_token, name='get-access-token'),
+    
 ]
