@@ -66,4 +66,4 @@ This document provides a guide on integrating Google OAuth 2.0 API for authentic
 ---
 This guide provides a structured way to authenticate, manage Google Drive files, and enable real-time messaging using WebSockets. Follow the steps carefully to test and integrate these functionalities successfully.
 # Note:
-You can proceed with unsafe mode
+You can proceed with unsafe mode on browser
